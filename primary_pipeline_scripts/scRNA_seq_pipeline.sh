@@ -2,28 +2,32 @@
 #!/bin/bash
 # this scRNA-seq pipeline accept a input folder, and then use the default parameter for the data processing and analysis, and generate a sparse gene count matrix for downstream analysis
 
-fastq_folder=$1 # the folder for fastq files
-all_output_folder=$2 # the output folder
-sample_ID=$3 # the sample ID for each PCR samples after demultiplex
-gtf_file=$4 # reference gtf files for gene counting
-core=$5 # core number for computation
-cutoff=$6  # the number of unique reads cutoff for splitting single cells
-barcodes=$7 # the RT barcode list for splitting single cells
-index=$8 # STAR index for mapping
-script_folder=$9 # the script folder for called python scripts
+fastq_folder=$1      # input folder with fastq files
+all_output_folder=$2 # output folder
+sample_ID=$3         # file containing sample IDs for each PCR sample after demultiplex
+gtf_file=$4          # reference gtf files for gene counting
+core=$5              # number of cores for computation
+cutoff=$6            # the number of unique reads cutoff for splitting single cells
+barcodes=$7          # the RT barcode list for splitting single cells
+index=$8             # STAR index for mapping
+script_folder=$9     # script folder for called python scripts
 
-#define the mismatch rate (edit distance) of UMIs for removing duplicates:
+# define the mismatch rate (edit distance) of UMIs for removing duplicates:
 
 mismatch=1
 
 #define the bin of python
-python_path="/net/shendure/vol1/home/cao1025/anaconda2/bin/"
+
+module load contrib/python/2.7.14
+
+# python_path=/usr/bin/python
+python_path=/sw/contrib/python/2.7.14/bin/
 
 #define the location of script:
 script_path=$script_folder
 
-module load samtools/1.3
-module load bedtools/2.24.0
+module load contrib/samtools/1.6
+module load contrib/bedtools/2.26.0
 
 ############ RT barcode and UMI attach
 # this script take in a input folder, a sample ID, a output folder, a oligo-dT barcode file and
@@ -44,16 +48,18 @@ echo "Barcode transformed and UMI attached."
 echo
 echo "Start trimming the read2 file..."
 echo $(date)
-module load python/2.7.3
-module load cutadapt/1.8.3
-module load trim_galore/0.4.1
+
+module load contrib/parallel/20171122
+module load contrib/cutadapt/1.15
+module load contrib/trim_galore/0.4.5
+
 mkdir $all_output_folder/trimmed_fastq
 trimmed_fastq=$all_output_folder/trimmed_fastq
 UMI_attached_R2=$all_output_folder/UMI_attach
 for sample in $(cat $sample_ID); do echo trimming $sample; sem -j $core trim_galore $UMI_attached_R2/$sample*.gz -a AAAAAAAA --three_prime_clip_R1 1 -o $trimmed_fastq; done
 sem --semaphoretimeout 1800
 echo "All trimmed file generated."
-module unload python/2.7.3
+
 
 ############align the reads with STAR, filter the reads, and remove duplicates based on UMI sequence and tagmentation site
 
@@ -85,7 +91,7 @@ echo "Start filter and sort the sam files..."
 echo input folder: $STAR_output_folder
 echo output folder: $filtered_sam_folder
 mkdir -p $filtered_sam_folder
-module load samtools/1.3
+
 for sample in $(cat $sample_ID); do echo Filtering $sample; sem -j $core samtools view -bh -q 30 -F 4 $STAR_output_folder/$sample*.sam|samtools sort -@ 10 -|samtools view -h ->$filtered_sam_folder/$sample.sam; done
 sem --semaphoretimeout 1800
 
@@ -123,7 +129,7 @@ echo ouput folder: $output_folder
 echo barcode file: $barcode_file
 echo cutoff value: $cutoff
 mkdir -p $output_folder
-module unload python
+
 for sample in $(cat $sample_list); do echo Now splitting $sample; sem -j $core $python_path/python $script_path/sam_split.py $sam_folder/$sample.sam $barcode_file $output_folder $cutoff; done
 sem --semaphoretimeout 1800
 cat $output_folder/*sample_list.txt>$output_folder/All_samples.txt
