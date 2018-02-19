@@ -21,12 +21,12 @@ from functools import partial
 
 def UMI_attach_read2_barcode_list(sample, input_folder, output_folder, barcode_list, mismatch_rate = 1):
     #open the read1, read2, and output file
-    Read1 = input_folder + "/" + sample + ".R1.fastq.gz"
-    Read2 = input_folder + "/" + sample + ".R2.fastq.gz"
+    Read1 = input_folder + "/" + sample + ".R1.fastq"
+    Read2 = input_folder + "/" + sample + ".R2.fastq"
     output_file = output_folder + "/" + sample + ".R2.fastq.gz"
     mismatch_rate = int(mismatch_rate)
-    f1 = gzip.open(Read1)
-    f2 = gzip.open(Read2)
+    f1 = open(Read1)
+    f2 = open(Read2)
     f3 = gzip.open(output_file, 'wb')
     
     line1 = f1.readline()
@@ -95,12 +95,7 @@ def attach_UMI_files(input_folder, sampleID, output_folder, barcode_file, core_n
     
     #for each sample in the sample list, use the read1 file, read2 file, output file
     # and barcode_list to run UMI_attach_read2_barcode_list
-    sample_file = open(sampleID)
-    sample_list = []
-    for line in sample_file:
-        sample = line.strip()
-        sample_list.append(sample)
-    sample_file.close()
+    sample_list = [sampleID.strip()]
     
     # parallele for the functions
     p = Pool(processes = int(core_number))

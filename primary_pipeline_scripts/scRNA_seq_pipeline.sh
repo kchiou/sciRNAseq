@@ -63,6 +63,8 @@ echo "All trimmed file generated."
 
 ############align the reads with STAR, filter the reads, and remove duplicates based on UMI sequence and tagmentation site
 
+module load contrib/star/2.5
+
 #define the output folder
 input_folder=$trimmed_fastq
 STAR_output_folder=$all_output_folder/STAR_alignment
@@ -115,7 +117,7 @@ echo "Alignment and sam file preprocessing are done."
 
 ################# split the sam file based on the barcode, and mv the result to the report folder
 sam_folder=$all_output_folder/rmdup_sam
-bash $script_folder/samfile_split_multi_threads.sh $sam_folder $sample_ID $out_folder $barcodes $cutoff
+# bash $script_folder/samfile_split_multi_threads.sh $sam_folder $sample_ID $out_folder $barcodes $cutoff
 sample_list=$sample_ID
 output_folder=$all_output_folder/sam_splitted
 barcode_file=$barcodes
@@ -132,12 +134,13 @@ mkdir -p $output_folder
 
 for sample in $(cat $sample_list); do echo Now splitting $sample; sem -j $core $python_path/python $script_path/sam_split.py $sam_folder/$sample.sam $barcode_file $output_folder $cutoff; done
 sem --semaphoretimeout 1800
-cat $output_folder/*sample_list.txt>$output_folder/All_samples.txt
-cp $output_folder/All_samples.txt $output_folder/../barcode_samples.txt
+
+cat output/sam_splitted/*sample_list.txt > output/sam_splitted/all_samples.txt
+cp output/sam_splitted/all_samples.txt output/barcode_samples.txt
 # output the report the report/barcode_read_distribution folder
-mkdir -p $output_folder/../report/barcode_read_distribution
-mv $output_folder/*.txt $output_folder/../report/barcode_read_distribution/
-mv $output_folder/*.png $output_folder/../report/barcode_read_distribution/
+mkdir -p output/report/barcode_read_distribution
+mv output/sam_splitted/*.txt output/report/barcode_read_distribution/
+mv output/sam_splitted/*.png output/report/barcode_read_distribution/
 echo
 echo "All sam file splitted."
 
@@ -150,13 +153,15 @@ alignment=$STAR_output_folder
 filtered_sam=$filtered_sam_folder
 rm_dup_sam=$rmdup_sam_folder
 #split_sam=$parental_folder/splited_sam
-report_folder=$all_output_folder/report/read_num
+report_folder=output/report/read_num
 echo
 echo "Start calculating the reads number..."
 #make the report folder
 mkdir -p $report_folder
+
 #calculate the read number and output the read number into the report folder
-echo sample,total reads,after filtering barcode,after trimming,uniquely aligned reads,After remove duplicates>$report_folder/read_number.csv
+echo sample,total reads,after filtering barcode,after trimming,uniquely aligned reads,After remove duplicates > $report_folder/read_number.csv
+
 for sample in $(cat $sample_ID); do echo calculating $sample; echo $sample,$(expr $(zcat $fastq_folder/$sample*R2*.gz|wc -l) / 4),$(expr $(zcat $UMI_attach/$sample*R2*.gz|wc -l) / 4),$(expr $(zcat $trimmed_folder/$sample*R2*.gz|wc -l) / 4),$(samtools view $filtered_sam/$sample.sam|wc -l),$(samtools view $rm_dup_sam/$sample.sam|wc -l)>>$report_folder/read_number.csv; done
 echo "Read number calculation is done."
 
@@ -176,9 +181,17 @@ echo "Calculation done."
 output_folder=$all_output_folder/report/human_mouse_gene_count/
 core_number=$core
 
-script=$script_folder/sciRNAseq_count.py
+#script=primary_pipeline_scripts/sciRNAseq_count.py
+#gtf_file=genomes/Macaca_mulatta.Mmul_8.0.1.90.gtf
+#input_folder=output/sam_splitted
+#sample_ID=output/barcode_samples.txt
+#core_number=8
+
+output_folder=output/report/gene_count
+
+# script=$script_folder/sciRNAseq_count.py
 echo "Start the gene count...."
-$python_path/python $script $gtf_file $input_folder $sample_ID $core_number
+python $script $gtf_file $input_folder $sample_ID $core_number
 
 echo "Make the output folder and transfer the files..."
 mkdir -p $output_folder

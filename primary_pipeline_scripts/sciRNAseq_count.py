@@ -230,17 +230,33 @@ def sciRNA_count_parallel(gtf_file, input_folder, sample_ID, core_number):
             genes[ feature.iv ] += feature.attr["gene_id"]
             gene_count += 1
             
-            # for human and mouse gtf file
-            message = (feature.attr["gene_id"] + "," + feature.attr["gene_type"] + "," 
-                       + "exon" + "," + feature.attr["gene_name"] + "," + str(gene_count) + "\n")
+            # Test if gene_name exists
+            if "gene_name" in feature.attr:
+                message = (feature.attr["gene_id"] + "," + feature.attr["gene_biotype"] + ","
+                           + "exon" + "," + feature.attr["gene_name"] + "," + str(gene_count) + "\n")
+            else:
+                message = (feature.attr["gene_id"] + "," + feature.attr["gene_biotype"] + ","
+                           + "exon" + ",," + str(gene_count) + "\n")
+
+#            # for human and mouse gtf file
+#            message = (feature.attr["gene_id"] + "," + feature.attr["gene_type"] + "," 
+#                       + "exon" + "," + feature.attr["gene_name"] + "," + str(gene_count) + "\n")
             
             gene_annotat.write(message)
             
             gene_count += 1
             
             # for human and mouse gtf file
-            message = (feature.attr["gene_id"] + "_intron" + "," + feature.attr["gene_type"] + "," 
-                       + "intron" + "," + feature.attr["gene_name"] + "_intron" + "," + str(gene_count) + "\n")
+            if "gene_name" in feature.attr:
+                message = (feature.attr["gene_id"] + "_intron" + "," + feature.attr["gene_biotype"] + "," 
+                           + "intron" + "," + feature.attr["gene_name"] + "_intron" + "," + str(gene_count) + "\n")
+            else:
+                message = (feature.attr["gene_id"] + "_intron" + "," + feature.attr["gene_biotype"] + "," 
+                           + "intron" + ",," + str(gene_count) + "\n")
+
+#            message = (feature.attr["gene_id"] + "_intron" + "," + feature.attr["gene_type"] + "," 
+#                       + "intron" + "," + feature.attr["gene_name"] + "_intron" + "," + str(gene_count) + "\n")
+
             gene_annotat.write(message)
             
         elif feature.type == "transcript":
