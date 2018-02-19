@@ -47,7 +47,6 @@ echo
 echo "Start trimming the read2 file..."
 echo $(date)
 
-module load contrib/cutadapt/1.15
 module load contrib/trim_galore/0.4.5
 
 mkdir -p $all_output_folder/trimmed_fastq
