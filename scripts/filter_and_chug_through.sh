@@ -56,6 +56,6 @@ report_folder=output/report/read_num
 mkdir -p $report_folder
 
 echo calculating $sample;
-echo $sample,$(expr $(cat $fastq_folder/$sample*R2*.fastq|wc -l) / 4),$(expr $(zcat $UMI_attach/$sample*R2*.gz|wc -l) / 4),$(expr $(zcat $trimmed_folder/$sample*R2*.gz|wc -l) / 4),$(samtools view $filtered_sam/$sample.sam|wc -l),$(samtools view $rm_dup_sam/$sample.sam|wc -l)>>$report_folder/read_number.csv;
+echo $sample,$(expr $(zcat $fastq_folder/$sample*R2*.fastq.gz|wc -l) / 4),$(expr $(zcat $UMI_attach/$sample*R2*.gz|wc -l) / 4),$(expr $(zcat $trimmed_folder/$sample*R2*.gz|wc -l) / 4),$(samtools view $filtered_sam/$sample.sam|wc -l),$(samtools view $rm_dup_sam/$sample.sam|wc -l)>>$report_folder/read_number.csv;
 
 exit;

@@ -3,6 +3,7 @@
 module load contrib/python/2.7.14
 
 script=primary_pipeline_scripts/sciRNAseq_count.py
+# gtf_file=genomes/mouse_human.gtf
 gtf_file=genomes/Macaca_mulatta.Mmul_8.0.1.90.gtf
 input_folder=output/sam_splitted
 sample_ID=output/barcode_samples.txt
